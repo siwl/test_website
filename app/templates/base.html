@@ -1,6 +1,7 @@
 {% extends "bootstrap/base.html" %}
 
-{% block title %}Flasky{% endblock %}
+{% block html_attribs %} lang="en"{% endblock %}
+{% block title %}Stony Brook School{% endblock %}
 
 {% block head %}
 {{ super() }}
@@ -9,6 +10,7 @@
 {% endblock %}
 
 {% block navbar %}
+<img src="../static/sbulogo.jpg" alt="Banner" style="width:1340px;height:128px;">
 <div class="navbar navbar-inverse" role="navigation">
     <div class="container">
         <div class="navbar-header">
@@ -35,12 +37,14 @@
                     </ul>
                 </li>
                 {% else %}
+                <li><a href="{{ url_for('auth.register') }}">Sign Up</a></li>
                 <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
                 {% endif %}
             </ul>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block content %}
