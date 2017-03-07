@@ -8,15 +8,106 @@ from . import db, login_manager
 
 
 class Permission:
-    ENROLL = 0x01
-    VIEW_ROSTER = 0x02
-    ADMINISTER = 0x80
+    ADMIN = 0b11111111
+    TREASURER = 0b01010111
+    PROVOST = 0b00110111
+    BOARD = 0b00010111
+    TEACHER = 0b00000111
+    TEACHERASSIST = 0b00000011
+    STUDENT = 0b00000001
+    INACTIVE = 0b00000000
 
+class Registration(db.Model):
+    __tablename__ = 'registrations'
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'),
+                            primary_key=True)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'),
+                            primary_key=True)   
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-class Course(db.Model):
-    __tablename__ = 'courses'
+class Class(db.Model):
+    __tablename__ = 'classes'
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64), unique=True)
+    name = db.Column(db.String(30), unique=True)
+    description = db.Column(db.String(100), nullable=False)
+    class_type = db.Column(db.String(10))
+    students = db.relationship('Registration',
+                               foreign_keys=[Registration.class_id],
+                               backref=db.backref('classes', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+
+class Student(db.Model):
+    __tablename__ = 'students'
+    id = db.Column(db.Integer, primary_key=True)
+    last_name = db.Column(db.String(30), nullable=False)
+    first_name = db.Column(db.String(30), nullable=False)
+    middle_name = db.Column(db.String(30))
+    chinese_name = db.Column(db.Unicode(5))
+    gender = db.Column(db.String(30))
+    birthday = db.Column(db.Date())
+    added_time = db.Column(db.DateTime())
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    classes = db.relationship('Registration',
+                               foreign_keys=[Registration.student_id],
+                               backref=db.backref('students', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
+
+class Teacher(db.Model):
+    __tablename__ = 'teachers'
+    id = db.Column(db.Integer, primary_key=True)
+    last_name = db.Column(db.String(30), nullable=False)
+    first_name = db.Column(db.String(30), nullable=False)
+    middle_name = db.Column(db.String(30))
+    chinese_name = db.Column(db.Unicode(5))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+class TeacherAssist(db.Model):
+    __tablename__ = 'teacherassists'
+    id = db.Column(db.Integer, primary_key=True)
+    last_name = db.Column(db.String(30), nullable=False)
+    first_name = db.Column(db.String(30), nullable=False)
+    middle_name = db.Column(db.String(30))
+    chinese_name = db.Column(db.Unicode(5))
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
+class Session(db.Model):
+    __tablename__ = 'sessions'
+    id = db.Column(db.Integer, primary_key=True)
+    school_year = db.Column(db.String(4), nullable=False)
+    time = db.Column(db.String(2), nullable=False)
+    room = db.Column(db.String(10))
+    duration = db.Column(db.Integer, default=2)
+    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
+
+class StudentSession(db.Model):
+    __tablename__ = 'studentsessions'
+    status = db.Column(db.String(10), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'), 
+                        primary_key=True)
+    stundent_id = db.Column(db.Integer, db.ForeignKey('teacherassists.id'), 
+                        primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) 
+
+class TASession(db.Model):
+    __tablename__ = 'tasessions'
+    status = db.Column(db.String(10), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'),
+                        primary_key=True)
+    ta_id = db.Column(db.Integer, db.ForeignKey('teacherassists.id'),
+                        primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) 
+
+class Transaction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    amount = db.Column(db.String(10), nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) 
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    description = db.Column(db.String(100))
+
+
+
 
 
 class Role(db.Model):
@@ -53,6 +144,19 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(64), unique=True, index=True)
     username = db.Column(db.String(64), unique=True, index=True)
+    nickname = db.Column(db.String(15))
+    address = db.Column(db.String(200))
+    last_name1 = db.Column(db.String(30), nullable= False)
+    first_name1 = db.Column(db.String(30), nullable= False)
+    middle_name1 = db.Column(db.String(30))
+    chinese_name1 = db.Column(db.Unicode(5))
+    phone1 = db.Column(db.String(11), nullable= False)
+    last_name2 = db.Column(db.String(30))
+    first_name2 = db.Column(db.String(30))
+    chinese_name2 = db.Column(db.Unicode(5))
+    phone2 = db.Column(db.String(11))
+
+    
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
