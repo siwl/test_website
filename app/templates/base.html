@@ -7,6 +7,11 @@
 <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
 <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/3/w3.css">
+
+{% block styles %}
+{{ super() }}
+{% endblock styles %}
 {% endblock %}
 
 {% block navbar %}
@@ -25,7 +30,7 @@
             <ul class="nav navbar-nav">
                 <li><a href="{{ url_for('main.index') }}">Home</a></li>
                 {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('main.user', username=current_user.username) }}">Profile</a></li>
+                <li><a href="{{ url_for('user.profile', user_id=current_user.id) }}">Profile</a></li>
                 {% endif %}
             </ul>
             <ul class="nav navbar-nav navbar-right">
@@ -36,13 +41,12 @@
                         Account <b class="caret"></b>
                     </a>
                     <ul class="dropdown-menu">
-                        <li><a href="{{ url_for('auth.change_password') }}">Change Password</a></li>
-                        <li><a href="{{ url_for('auth.change_email_request') }}">Change Email</a></li>
-                        <li><a href="{{ url_for('auth.logout') }}">Log Out</a></li>
+                        <li><a href="{{ url_for('user.change_password', user_id=current_user.id) }}">Change Password</a></li>
+                        <li><a href="{{ url_for('user.logout') }}">Log Out</a></li>
                     </ul>
                 </li>
                 {% else %}
-                <li><a href="{{ url_for('auth.login') }}">Log In</a></li>
+                <li><a href="{{ url_for('user.login') }}">Log In</a></li>
                 {% endif %}
             </ul>
         </div>
@@ -59,8 +63,29 @@
         {{ message }}
     </div>
     {% endfor %}
+    {% if current_user.is_authenticated %}
+    <!-- Sidebar -->
+    <div class="w3-sidebar w3-light-grey w3-bar-block" style="width:20%">
+    <h3 class="w3-bar-item">Menu</h3>
+    <a href="{{ url_for('user.change_password', user_id=current_user.id) }}" 
+    class="w3-bar-item w3-button">Change Password</a>
+    <a href=href="{{ url_for('user.edit_profile', user_id=current_user.id) }}" 
+    class="w3-bar-item w3-button">Edit Profile</a>
+    <a href="#" class="w3-bar-item w3-button">Link 3</a>
+    </div>
 
-    {% block page_content %}{% endblock %}
+    <!-- Page Content -->
+    <div style="margin-left:25%">
+    <div class="w3-container w3-teal">
+    <h1>My Profile</h1>
+    </div>
+    <div class="w3-container">
+    {% block page_content %}
+    <h2>Sidebar Navigation Example</h2>
+    {% endblock %}
+    </div>
+    </div>
+    {% endif %}
 </div>
 
 {% endblock %}
