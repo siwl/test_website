@@ -33,4 +33,16 @@ def create_app(config_name):
     from .user import user as user_blueprint
     app.register_blueprint(user_blueprint, url_prefix='/user')
 
+    from .student import student as student_blueprint
+    app.register_blueprint(student_blueprint, url_prefix='/student')
+
+    from .class_bp import classbp as classbp_blueprint
+    app.register_blueprint(classbp_blueprint, url_prefix='/class')
+
+    from .session import session as session_blueprint
+    app.register_blueprint(session_blueprint, url_prefix='/session')
+
+    from .teacher import teacher as teacher_blueprint
+    app.register_blueprint(teacher_blueprint, url_prefix='/teacher')
+
     return app

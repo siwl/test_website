@@ -3,15 +3,15 @@ from flask_login import login_user, logout_user, login_required, \
     current_user
 from . import user
 from .. import db
-from ..models import User
+from ..models import User, Student
 from ..email import send_email
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm,\
-    PasswordResetRequestForm, PasswordResetForm, ChangeEmailForm
+    PasswordResetRequestForm, PasswordResetForm, EditProfileForm
 
 @user.route('/user?user=<user_id>')
 def profile(user_id):
     user = User.query.filter_by(id=user_id).first_or_404()
-    return render_template('user/user.html', user=user)
+    return render_template('user.html', user=user)
 
 @user.before_app_request
 def before_request():
@@ -54,12 +54,20 @@ def logout():
 def register():
     form = RegistrationForm()
     if form.validate_on_submit():
-        user = User(email=form.email.data,
-                    username=form.username.data,
-                    password=form.password.data,
-                    last_name1=form.lastname.data,
-                    first_name1=form.firstname.data,
-                    phone1=form.phone.data)
+        user = User(email = form.email.data,
+                    password = form.password.data,
+                    address = form.address.data,
+                    nickname = form.nickname.data,
+                    last_name1 = form.lastname1.data,
+                    first_name1 = form.firstname1.data,
+                    middle_name1 = form.middlename1.data,
+                    chinese_name1 = form.chname1.data,
+                    phone1 = form.phone1.data,
+                    last_name2 = form.lastname2.data,
+                    first_name2 = form.firstname2.data,
+                    chinese_name2 = form.chname2.data,
+                    middle_name2 = form.middlename2.data,
+                    phone2 = form.phone2.data)
         db.session.add(user)
         db.session.commit()
         token = user.generate_confirmation_token()
@@ -148,15 +156,19 @@ def password_reset(token):
 def edit_profile(user_id):
     form = EditProfileForm()
     if form.validate_on_submit():
-        current_user.name = form.name.data
-        current_user.location = form.location.data
-        current_user.about_me = form.about_me.data
+        current_user.phone = form.phone1.data
+        current_user.first_name1 = form.first_name1.data
+        current_user.last_name1 = form.last_name1.data
         db.session.add(current_user)
         flash('Your profile has been updated.')
         return redirect(url_for('.user', username=current_user.username))
-    form.name.data = current_user.name
-    form.location.data = current_user.location
-    form.about_me.data = current_user.about_me
+    form.first_name1.data = current_user.first_name1
+    form.last_name1.data = current_user.last_name1
+    form.phone1.data = current_user.phone1
     return render_template('edit_profile.html', form=form)
 
-
+@user.route('/account?user=<user_id>')
+def account(user_id):
+    user = User.query.filter_by(id=user_id).first_or_404()
+    students = user.students.order_by(Student.added_time.desc()).all()
+    return render_template('user/account.html', user=user, students = students)

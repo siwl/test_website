@@ -5,6 +5,8 @@ from itsdangerous import TimedJSONWebSignatureSerializer as Serializer
 from flask import current_app, request
 from flask_login import UserMixin, AnonymousUserMixin
 from . import db, login_manager
+from sqlalchemy import UniqueConstraint
+
 
 
 class Permission:
@@ -31,6 +33,7 @@ class Class(db.Model):
     name = db.Column(db.String(30), unique=True)
     description = db.Column(db.String(100), nullable=False)
     class_type = db.Column(db.String(10))
+    sessions = db.relationship('Session', backref='class', lazy='dynamic')
     students = db.relationship('Registration',
                                foreign_keys=[Registration.class_id],
                                backref=db.backref('classes', lazy='joined'),
@@ -46,7 +49,7 @@ class Student(db.Model):
     chinese_name = db.Column(db.Unicode(5))
     gender = db.Column(db.String(30))
     birthday = db.Column(db.Date())
-    added_time = db.Column(db.DateTime())
+    added_time = db.Column(db.DateTime(), default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     classes = db.relationship('Registration',
                                foreign_keys=[Registration.student_id],
@@ -80,6 +83,7 @@ class Session(db.Model):
     room = db.Column(db.String(10))
     duration = db.Column(db.Integer, default=2)
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
+    __table_args__ = (UniqueConstraint('time', 'room', name='time_room_uk'),)
 
 class StudentSession(db.Model):
     __tablename__ = 'studentsessions'
@@ -142,30 +146,26 @@ class Role(db.Model):
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(64), unique=True, index=True)
-    username = db.Column(db.String(64), unique=True, index=True)
+    email = db.Column(db.String(50), unique=True, index=True)
     nickname = db.Column(db.String(15))
     address = db.Column(db.String(200))
+    #Contact 1
     last_name1 = db.Column(db.String(30), nullable= False)
     first_name1 = db.Column(db.String(30), nullable= False)
     middle_name1 = db.Column(db.String(30))
     chinese_name1 = db.Column(db.Unicode(5))
     phone1 = db.Column(db.String(11), nullable= False)
+    #Contact 2
     last_name2 = db.Column(db.String(30))
     first_name2 = db.Column(db.String(30))
+    middle_name2 = db.Column(db.String(30))
     chinese_name2 = db.Column(db.Unicode(5))
     phone2 = db.Column(db.String(11))
-
     
     role_id = db.Column(db.Integer, db.ForeignKey('roles.id'))
     password_hash = db.Column(db.String(128))
     confirmed = db.Column(db.Boolean, default=False)
-    name = db.Column(db.String(64))
-    location = db.Column(db.String(64))
-    about_me = db.Column(db.Text())
-    member_since = db.Column(db.DateTime(), default=datetime.utcnow)
-    last_seen = db.Column(db.DateTime(), default=datetime.utcnow)
-    avatar_hash = db.Column(db.String(32))
+    students = db.relationship('Student', backref='user', lazy='dynamic')
 
     def __init__(self, **kwargs):
         super(User, self).__init__(**kwargs)
@@ -174,9 +174,7 @@ class User(UserMixin, db.Model):
                 self.role = Role.query.filter_by(permissions=0xff).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
-        if self.email is not None and self.avatar_hash is None:
-            self.avatar_hash = hashlib.md5(
-                self.email.encode('utf-8')).hexdigest()
+        
 
     @property
     def password(self):
