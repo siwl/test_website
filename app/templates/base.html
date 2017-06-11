@@ -63,17 +63,33 @@
     </div>
     {% endfor %}
     {% if current_user.is_authenticated %}
+    {% block menu %}
     <!-- Sidebar -->
     <div class="w3-sidebar w3-light-grey w3-bar-block" style="width:20%">
     <h3 class="w3-bar-item">Menu</h3>
     <a href="{{ url_for('user.profile', user_id=current_user.id) }}" 
-    class="w3-bar-item w3-button">My Profile</a>
-    <a href="{{ url_for('user.change_password', user_id=current_user.id) }}" 
-    class="w3-bar-item w3-button">Change Password</a>
-    <a href="{{ url_for('user.edit_profile', user_id=current_user.id) }}" 
-    class="w3-bar-item w3-button">Edit Profile</a>
+    class="w3-bar-item w3-button">Profile</a>   
+    {% if current_user.can(1) %}
     <a href="{{ url_for('user.account', user_id=current_user.id) }}" 
     class="w3-bar-item w3-button">Account</a>
+    {% endif %}
+    {% if current_user.can(2) %}
+    <a href="{{ url_for('user.account', user_id=current_user.id) }}" 
+    class="w3-bar-item w3-button">Teaching</a>
+    {% endif %}
+    {% if current_user.can(16) %}
+    <a href="{{ url_for('user.account', user_id=current_user.id) }}" 
+    class="w3-bar-item w3-button">Students</a>
+    {% endif %}
+    {% if current_user.can(32) %}
+    <a href="{{ url_for('classbp.browse') }}" 
+    class="w3-bar-item w3-button">Classes</a>
+    <a href="{{ url_for('session.browse') }}" 
+    class="w3-bar-item w3-button">Sessions</a>
+    <a href="{{ url_for('teacher.browse') }}" 
+    class="w3-bar-item w3-button">Teachers</a>
+    {% endif %}
+
     <a href="{{ url_for('student.addstudent', user_id=current_user.id) }}" 
     class="w3-bar-item w3-button">Add Student</a>
     <a href="{{ url_for('student.profile', student_id=current_user.id) }}" 
@@ -87,6 +103,7 @@
     <h1>My Profile</h1>
     </div>
     <div class="w3-container">
+    {% endblock %}
     {% block side_content %}
     <h2>Sidebar Navigation Example</h2>
     {% endblock %}

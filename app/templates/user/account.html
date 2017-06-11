@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Flasky - Edit Profile{% endblock %}
+{% block title %}Flasky - Account{% endblock %}
 
 {% block side_content %}
 <div class="page-header">
-    <h1>Hello! {{ current_user.first_name1}}</h1>
+    <h1>Hello! {{ current_user.first_name1 }}. This is your account.</h1>
 </div>
 
 <ul class="list-group">
 	{% for student in students %}
-    <li class="list-group-item">{{ student.first_name }}  {{ student.last_name }}</li>
+    <li class="list-group-item"><a href="{{ url_for('student.profile', student_id=student.id) }}" >
+    {{ student.first_name }}  {{ student.last_name }}</li>
+    <li class="list-group-item"><a href="{{ url_for('student.sessionlist', student_id=student.id) }}" >Enroll</a></li>
     {% endfor %}
 </ul>
 {% endblock %}

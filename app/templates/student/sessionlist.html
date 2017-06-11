@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Flasky - Sessions{% endblock %}
+
+{% block side_content %}
+<div class="page-header">
+    <h1>All Seesions</h1>
+</div>
+<div class="col-md-4">
+    {% for session in sessions %}    
+    	<li class="list-group-item">{{ session.school_year }}  {{ session.time }} 
+    	{{ session.room }} {{session.class_name()}}
+    	{% if not student.is_registering(session) %}
+    	<a href="{{ url_for('student.register', student_id=student.id, session_id=session.id) }}" >Enroll</a>
+    	{% endif %}
+    	</a></li>
+    {% endfor %}
+
+</div>
+{% endblock %}

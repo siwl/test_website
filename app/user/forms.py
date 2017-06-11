@@ -21,7 +21,7 @@ class RegistrationForm(Form):
     password2 = PasswordField('Confirm password', validators=[Required()])
     address = TextAreaField('Address', validators=[Length(1, 200)])
     nickname = StringField('Nickname', validators=[
-        Length(1, 15), Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
+        Optional(), Length(0, 15), Regexp('^[A-Za-z][A-Za-z0-9_.]*$', 0,
                                           'Nicknames must have only letters, '
                                           'numbers, dots or underscores')])
     lastname1 = StringField('Last Name (Contact 1)', validators=[
@@ -99,7 +99,7 @@ class ChangeEmailForm(Form):
 class EditProfileForm(Form):
     last_name1 = StringField('Last Name', validators=[Length(0, 20)])
     first_name1 = StringField('First Name', validators=[Length(0, 20)])
-    phone1 = IntegerField('phone number', validators=[Length(11, 11)])
+    phone1 = StringField('phone number', validators=[Length(11, 11)])
     submit = SubmitField('Submit')
 
 

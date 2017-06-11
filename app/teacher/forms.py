@@ -16,6 +16,8 @@ class NewTeacherForm(Form):
         Optional(), Length(1, 30)])
     chinesename = StringField('Chinese Name', validators=[
         Optional(), Length(1, 30)])
+    user = IntegerField('User ID', validators=[
+        Required()])
     submit = SubmitField('Submit')
 
 class EditProfileForm(Form):

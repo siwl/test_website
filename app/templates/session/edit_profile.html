@@ -9,5 +9,9 @@
 </div>
 <div class="col-md-4">
     {{ wtf.quick_form(form) }}
+    {% if current_user.can(Permission.bit5) %}
+    <p><a href="{{ url_for('session.assignteacher',session_id = session.id) }}" class="btn btn-primary">Assign Teacher</a></p>
+{% endif %}
 </div>
+
 {% endblock %}

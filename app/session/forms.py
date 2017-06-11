@@ -24,3 +24,7 @@ class EditProfileForm(Form):
     room = StringField('Room', validators=[Optional(), Length(0, 30)])
     duration = IntegerField('Duration', validators=[Optional()])
     submit = SubmitField('Submit')
+
+
+class AssignTeacherForm(Form):
+    teacher = IntegerField('Teacher ID', validators=[Required()])

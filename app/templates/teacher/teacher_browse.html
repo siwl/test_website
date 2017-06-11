@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Flasky - Teachers{% endblock %}
+{% block title %}Teachers{% endblock %}
 
 {% block side_content %}
 <div class="page-header">
@@ -9,10 +9,16 @@
 </div>
 <div class="col-md-4">
     {% for teacher in teachers %}    
-    	<li class="list-group-item"><a href="{{ url_for('classbp.profile', class_id=teacher.id) }}" >{{ teacher.first_name }}  {{ teacher.last_name }}</a></li>
+    	No.{{ teacher.id}}<li class="list-group-item"><a href="{{ url_for('teacher.profile', teacher_id=teacher.id) }}" >{{ teacher.first_name }}  {{ teacher.last_name }}</a></li>
+    	{% if current_user.can(Permission.bit4) %}
   		<li class="list-group-item"><a href="{{ url_for('teacher.edit_profile', teacher_id=teacher.id) }}" >Edit</a></li>
+  		<li class="list-group-item"><a href="{{ url_for('teacher.delete_teacher', teacher_id=teacher.id) }}" >Delete</a></li>
+  		{% endif %}
     	
     {% endfor %}
-
+    {% if current_user.can(Permission.bit4) %}
+    <p><a href="{{ url_for('teacher.addteacher') }}" class="btn btn-primary">Add Teacher</a></p>
+	{% endif %}
+    	
 </div>
 {% endblock %}

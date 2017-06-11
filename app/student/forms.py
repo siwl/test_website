@@ -25,7 +25,7 @@ class RegisterSessionForm(Form):
 
 
 class EditProfileForm(Form):
-    name = StringField('Name', validators=[Length(0, 20)])
+    lastname = StringField('Name', validators=[Length(0, 20)])
     firstname = StringField('First Name', validators=[Length(0, 20)])
     middlename = StringField('Middle Name', validators=[Length(0, 30)])
     chinesename = StringField('Chinese Name', validators=[Length(0,30)])

@@ -5,6 +5,15 @@
 
 {% block side_content %}
 <div class="page-header">
-    <h1>Hello! {{ current_user.first_name1}}</h1>
+    <div class="profile-header">
+        <h1>{{ current_user.first_name1 }}</h1>
+    </div>
+
+    {% if int(current_user.get_id()) == user.id or current_user.can(8) %}
+    <p>Here I come</p>
+    <p><a href="{{ url_for('user.edit_profile', user_id=user.id) }}" class="btn btn-primary">Edit</a></p>
+    <p><a href="{{ url_for('user.account', user_id=user.id) }}" class="btn btn-primary">Account</a></p>
+    <p><a href="{{ url_for('user.change_password', user_id=user.id) }}" class="btn btn-primary">Change Password</a></p>
+    {% endif %}
 </div>
 {% endblock %}

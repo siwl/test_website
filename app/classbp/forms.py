@@ -1,6 +1,6 @@
 from flask_wtf import Form
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, IntegerField, \
-    TextAreaField, DateField
+    TextAreaField, DateField, SelectField  
 from wtforms.validators import Required, Optional, Length, Email, Regexp, EqualTo
 from wtforms import ValidationError
 from ..models import User
@@ -12,8 +12,8 @@ class NewClassForm(Form):
         Required(), Length(1, 30)])
     description = TextAreaField('Description', validators=[
         Required(), Length(1, 100)])
-    classtype = StringField('Type', validators=[
-        Required(), Length(0, 10)])
+    classtype = SelectField('Type', choices=[
+        ('1','Language'), ('2','Bilingual'), ('3','Culture'), ('4','Adult')])
     submit = SubmitField('Submit')
 
 

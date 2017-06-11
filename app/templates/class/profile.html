@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% import "bootstrap/wtf.html" as wtf %}
 
-{% block title %}Flasky - Teacher Profile{% endblock %}
+{% block title %}Flasky - Class Info{% endblock %}
 
 {% block side_content %}
 <div class="page-header">
@@ -10,5 +10,12 @@
 <div class="col-md-4">
     <p> No.{{ tclass.id }}</p>
     <p>{{ tclass.name }} </p>
+    <h3>All Sessions</h3>
+    {% for session in tclass.sessions %}
+    <p>{{ session.school_year }} {{ session.time }} {{ session.room }}</p>
+    {% endfor %}
+    {% if current_user.can(Permission.bit5) %}
+    <p><a href="{{ url_for('session.addsession', class_id=tclass.id) }}" class="btn btn-primary">Add Session</a></p>
+    {% endif %}
 </div>
 {% endblock %}

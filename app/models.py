@@ -18,14 +18,40 @@ class Permission:
     TEACHERASSIST = 0b00000011
     STUDENT = 0b00000001
     INACTIVE = 0b00000000
+    #bit info
+    bit0 = 0b00000001
+    bit1 = 0b00000010
+    bit2 = 0b00000100
+    bit3 = 0b00001000
+    bit4 = 0b00010000
+    bit5 = 0b00100000
+    bit6 = 0b01000000
+    bit7 = 0b10000000
 
-class Registration(db.Model):
-    __tablename__ = 'registrations'
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'),
-                            primary_key=True)
-    class_id = db.Column(db.Integer, db.ForeignKey('classes.id'),
-                            primary_key=True)   
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+
+class StudentSession(db.Model):
+    __tablename__ = 'studentsessions'
+    status = db.Column(db.String(10), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'), 
+                        primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), 
+                        primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) 
+
+
+
+class TeacherSession(db.Model):
+    __tablename__ = 'teachersessions'
+    status = db.Column(db.String(10), nullable=False)
+    session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'), 
+                        primary_key=True)
+    teacher_id = db.Column(db.Integer, db.ForeignKey('teachers.id'), 
+                        primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) 
+
+
 
 class Class(db.Model):
     __tablename__ = 'classes'
@@ -34,11 +60,8 @@ class Class(db.Model):
     description = db.Column(db.String(100), nullable=False)
     class_type = db.Column(db.String(10))
     sessions = db.relationship('Session', backref='class', lazy='dynamic')
-    students = db.relationship('Registration',
-                               foreign_keys=[Registration.class_id],
-                               backref=db.backref('classes', lazy='joined'),
-                               lazy='dynamic',
-                               cascade='all, delete-orphan')
+
+
 
 class Student(db.Model):
     __tablename__ = 'students'
@@ -51,11 +74,22 @@ class Student(db.Model):
     birthday = db.Column(db.Date())
     added_time = db.Column(db.DateTime(), default=datetime.utcnow)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    classes = db.relationship('Registration',
-                               foreign_keys=[Registration.student_id],
-                               backref=db.backref('students', lazy='joined'),
+    sessions = db.relationship('StudentSession',
+                               foreign_keys=[StudentSession.student_id],
+                               backref=db.backref('student', lazy='joined'),
                                lazy='dynamic',
                                cascade='all, delete-orphan')
+
+    def is_registering(self, session):
+        return self.sessions.filter_by(
+            session_id=session.id).first() is not None
+
+    def register(self, session):
+        if not self.is_registering(session):
+            st = StudentSession(student=self, session=session, status='Register')
+            db.session.add(st)
+
+
 
 class Teacher(db.Model):
     __tablename__ = 'teachers'
@@ -65,6 +99,7 @@ class Teacher(db.Model):
     middle_name = db.Column(db.String(30))
     chinese_name = db.Column(db.Unicode(5))
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+
 
 class TeacherAssist(db.Model):
     __tablename__ = 'teacherassists'
@@ -84,15 +119,17 @@ class Session(db.Model):
     duration = db.Column(db.Integer, default=2)
     class_id = db.Column(db.Integer, db.ForeignKey('classes.id'))
     __table_args__ = (UniqueConstraint('time', 'room', name='time_room_uk'),)
+    students = db.relationship('StudentSession',
+                               foreign_keys=[StudentSession.session_id],
+                               backref=db.backref('session', lazy='joined'),
+                               lazy='dynamic',
+                               cascade='all, delete-orphan')
 
-class StudentSession(db.Model):
-    __tablename__ = 'studentsessions'
-    status = db.Column(db.String(10), nullable=False)
-    session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'), 
-                        primary_key=True)
-    stundent_id = db.Column(db.Integer, db.ForeignKey('teacherassists.id'), 
-                        primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow, nullable=False) 
+    def class_name(self):
+        tclass = Class.query.filter_by(id=self.class_id).first_or_404()
+        return tclass.name
+
+
 
 class TASession(db.Model):
     __tablename__ = 'tasessions'
@@ -125,10 +162,13 @@ class Role(db.Model):
     @staticmethod
     def insert_roles():
         roles = {
-            'User': (Permission.ENROLL, True),
-            'Teacher': (Permission.ENROLL |
-                          Permission.VIEW_ROSTER, False),
-            'Administrator': (0xff, False)
+            'User': (Permission.STUDENT, True),
+            'Teacher': (Permission.TEACHER, False),
+            'Treasurer': (Permission.TREASURER, False),
+            'Provost': (Permission.PROVOST, False),
+            'Board': (Permission.BOARD, False),
+            'TeacherAssist': (Permission.TEACHERASSIST, False),
+            'Administrator': (Permission.ADMIN, False)
         }
         for r in roles:
             role = Role.query.filter_by(name=r).first()
@@ -171,10 +211,21 @@ class User(UserMixin, db.Model):
         super(User, self).__init__(**kwargs)
         if self.role is None:
             if self.email == current_app.config['FLASKY_ADMIN']:
-                self.role = Role.query.filter_by(permissions=0xff).first()
+                self.role = Role.query.filter_by(permissions=0b11111111).first()
             if self.role is None:
                 self.role = Role.query.filter_by(default=True).first()
         
+    def has_student(self, student):
+        return self.students.filter_by(
+            id=student.id).first() is not None
+
+    def is_teaching(self, student):
+        role = Role.query.filter_by(id=self.role_id).first()
+        if not role.name == 'Teacher':
+            return False
+        return self.students.filter_by(
+            id=student.id).first() is not None
+
 
     @property
     def password(self):
@@ -246,8 +297,8 @@ class User(UserMixin, db.Model):
         return self.role is not None and \
             (self.role.permissions & permissions) == permissions
 
-    def is_administrator(self):
-        return self.can(Permission.ADMINISTER)
+    def is_admin(self):
+        return self.can(Permission.ADMIN)
 
     def ping(self):
         self.last_seen = datetime.utcnow()
@@ -264,7 +315,7 @@ class User(UserMixin, db.Model):
             url=url, hash=hash, size=size, default=default, rating=rating)
 
     def __repr__(self):
-        return '<User %r>' % self.username
+        return '<User %r>' % self.email
 
 
 class AnonymousUser(AnonymousUserMixin):

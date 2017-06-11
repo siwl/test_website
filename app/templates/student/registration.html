@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+
+{% block title %}Registration{% endblock %}
+
+{% block side_content %}
+<div class="page-header">
+    <h1>Registration</h1>
+</div>
+<div class="col-md-4">
+    {% for tclass in classes %}    
+    	<li class="list-group-item"><a href="{{ url_for('student.profile', class_id=teacher.id) }}" >{{ teacher.first_name }}  {{ teacher.last_name }}</a></li>
+  		<li class="list-group-item"><a href="{{ url_for('teacher.edit_profile', teacher_id=teacher.id) }}" >Edit</a></li>
+    	
+    {% endfor %}
+
+</div>
+{% endblock %}

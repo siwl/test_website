@@ -1,17 +1,78 @@
-from flask import render_template, redirect, request, url_for, flash
+from flask import render_template, redirect, request, url_for, flash, abort
 from flask_login import login_user, logout_user, login_required, \
     current_user
 from . import user
 from .. import db
-from ..models import User, Student
+from ..models import User, Student, Permission
 from ..email import send_email
 from .forms import LoginForm, RegistrationForm, ChangePasswordForm,\
     PasswordResetRequestForm, PasswordResetForm, EditProfileForm
+from ..decorators import authority_required, admin_required
 
+#US1
 @user.route('/user?user=<user_id>')
+@login_required
+@authority_required(Permission.bit4)
 def profile(user_id):
     user = User.query.filter_by(id=user_id).first_or_404()
     return render_template('user.html', user=user)
+
+
+#US2
+@user.route('/edit?user=<user_id>', methods=['GET', 'POST'])
+@login_required
+@authority_required(Permission.ADMIN)
+def edit_profile(user_id):
+    form = EditProfileForm()
+    print 'vali'
+    if form.validate_on_submit():
+        print 'validating'
+        current_user.phone = form.phone1.data
+        current_user.first_name1 = form.first_name1.data
+        current_user.last_name1 = form.last_name1.data
+        db.session.add(current_user)
+        flash('Your profile has been updated.')
+        return redirect(url_for('.profile', user_id = user_id))
+    form.first_name1.data = current_user.first_name1
+    form.last_name1.data = current_user.last_name1
+    form.phone1.data = current_user.phone1
+    return render_template('edit_profile.html', form=form)
+
+#US3
+@user.route('/password?user=<user_id>', methods=['GET', 'POST'])
+@login_required
+@authority_required(Permission.ADMIN)
+def change_password(user_id):
+    form = ChangePasswordForm()
+    if form.validate_on_submit():
+        if current_user.verify_password(form.old_password.data):
+            current_user.password = form.password.data
+            db.session.add(current_user)
+            flash('Your password has been updated.')
+            return redirect(url_for('.profile', user_id = user_id))
+        else:
+            flash('Invalid password.')
+    return render_template("user/auth/change_password.html", form=form)
+
+#US4
+@user.route('/account?user=<user_id>')
+@login_required
+@authority_required(Permission.ADMIN)
+def account(user_id):
+    user = User.query.filter_by(id=user_id).first_or_404()
+    students = user.students.order_by(Student.added_time.desc()).all()
+    return render_template('user/account.html', user = user, students = students)
+
+#US5
+@user.route('/browse', methods=['GET', 'POST'])
+@login_required
+@admin_required
+def browse():
+    users = User.query.all()
+    return render_template('user/user_browse.html', users = users)
+
+
+
 
 @user.before_app_request
 def before_request():
@@ -100,20 +161,6 @@ def resend_confirmation():
     return redirect(url_for('main.index'))
 
 
-@user.route('/password?user=<user_id>', methods=['GET', 'POST'])
-@login_required
-def change_password(user_id):
-    form = ChangePasswordForm()
-    if form.validate_on_submit():
-        if current_user.verify_password(form.old_password.data):
-            current_user.password = form.password.data
-            db.session.add(current_user)
-            flash('Your password has been updated.')
-            return redirect(url_for('main.index'))
-        else:
-            flash('Invalid password.')
-    return render_template("user/auth/change_password.html", form=form)
-
 
 @user.route('/reset', methods=['GET', 'POST'])
 def password_reset_request():
@@ -151,24 +198,3 @@ def password_reset(token):
     return render_template('user/auth/reset_password.html', form=form)
 
 
-@user.route('/edit?user=<user_id>', methods=['GET', 'POST'])
-@login_required
-def edit_profile(user_id):
-    form = EditProfileForm()
-    if form.validate_on_submit():
-        current_user.phone = form.phone1.data
-        current_user.first_name1 = form.first_name1.data
-        current_user.last_name1 = form.last_name1.data
-        db.session.add(current_user)
-        flash('Your profile has been updated.')
-        return redirect(url_for('.user', username=current_user.username))
-    form.first_name1.data = current_user.first_name1
-    form.last_name1.data = current_user.last_name1
-    form.phone1.data = current_user.phone1
-    return render_template('edit_profile.html', form=form)
-
-@user.route('/account?user=<user_id>')
-def account(user_id):
-    user = User.query.filter_by(id=user_id).first_or_404()
-    students = user.students.order_by(Student.added_time.desc()).all()
-    return render_template('user/account.html', user=user, students = students)
